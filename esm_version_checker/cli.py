@@ -11,13 +11,14 @@ import click
 esm_tools_modules = [
         "esm_archiving",
         "esm_autotests",
-        "esm_calender",
+        "esm_calendar",
         "esm_database",
         "esm_environment",
         "esm_master",
         "esm_parser",
         "esm_profile",
         "esm_rcfile",
+        "esm_runscripts",
         "esm_tools",
 ]
 
@@ -39,18 +40,19 @@ def check(args=None):
             tool_mod = importlib.import_module(tool)
             import_successful = True
             esm_tools_installed[tool] = True
-        except ImportError:
+        except ImportError as e:
             import_successful = False
-            print(tool, "could not be imported!")
         if import_successful:
             try:
-                print(tool, ":")
-                print("__version__ attribute:", tool_mod.__version__)
-                print("pkg_version in setup.py:", pkg_resources.get_distribution(tool).version)
+                print(tool, ":", tool_mod.__version__)
             except AttributeError:
-                print("Oops! %s has no version??" % tool)
-                raise
-        print("\n")
+                try:
+                    print(tool, ":", pkg_resources.get_distribution(tool).version)
+                except:
+                    #print("Oops! %s has no version??" % tool)
+                    raise
+        else:
+            print(tool, ": unknown version!")
 
 
 def pip_install(package):
