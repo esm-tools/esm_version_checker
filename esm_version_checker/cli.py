@@ -20,6 +20,7 @@ esm_tools_modules = [
         "esm_rcfile",
         "esm_runscripts",
         "esm_tools",
+        "esm_version_checker",
 ]
 
 esm_tools_installed = {tool: False for tool in esm_tools_modules}
