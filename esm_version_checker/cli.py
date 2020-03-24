@@ -82,8 +82,8 @@ def upgrade(tool_to_upgrade="all"):
             if esm_tools_installed[tool]:
                 pip_upgrade(tool)
     else:
-        if esm_tools_installed[tool]:
-            pip_upgrade(tool)
+        if esm_tools_installed[tool_to_update]:
+            pip_upgrade(tool_to_update)
 
 
 if __name__ == "__main__":
