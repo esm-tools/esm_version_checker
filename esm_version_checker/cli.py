@@ -2,6 +2,7 @@
 
 """Console script for esm_version_checker."""
 import importlib
+import os
 import pkg_resources
 import subprocess
 import sys
@@ -56,6 +57,16 @@ def check(args=None):
             print(tool, ": unknown version!")
 
 
+# PG: Blatant theft:
+# https://stackoverflow.com/questions/42582801/check-whether-a-python-package-has-been-installed-in-editable-egg-link-mode
+def dist_is_editable(dist):
+    """Is distribution an editable install?"""
+    for path_item in sys.path:
+        egg_link = os.path.join(path_item, dist.replace("_", "-") + '.egg-link')
+        if os.path.isfile(egg_link):
+            return True
+    return False
+
 def pip_install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://gitlab.awi.de/esm_tools/"+package])
 
@@ -63,7 +74,12 @@ def pip_uninstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", package])
 
 def pip_upgrade(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "git+https://gitlab.awi.de/esm_tools/"+package])
+    if not dist_is_editable(package):
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "git+https://gitlab.awi.de/esm_tools/"+package])
+    else:
+        print(package, "is installed in editable mode! No upgrade performed. You may consider doing a git pull...")
+
+
 
 def check_importable_tools():
     for tool in esm_tools_modules:
