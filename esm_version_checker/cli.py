@@ -2,6 +2,7 @@
 
 """Console script for esm_version_checker."""
 import importlib
+import pkg_resources
 import sys
 
 import click
@@ -39,10 +40,13 @@ def check(args=None):
             print(tool, "could not be imported!")
         if import_successful:
             try:
-                print(tool, ":", tool_mod.__version__)
+                print(tool, ":")
+                print("__version__ attribute:", tool_mod.__version__)
+                print("pkg_version in setup.py:", pkg_resources.get_distribution(tool).version)
             except AttributeError:
                 print("Oops! %s has no version??" % tool)
-
+                raise
+        print("\n")
 
 
 if __name__ == "__main__":
