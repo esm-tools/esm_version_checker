@@ -120,7 +120,6 @@ def upgrade(tool_to_upgrade="all"):
         for tool in esm_tools_modules:
             if esm_tools_installed[tool]:
                 pip_or_pull(tool)
-                pip_upgrade(tool)
     else:
         if esm_tools_installed[tool_to_upgrade]:
             pip_or_pull(tool_to_upgrade)
