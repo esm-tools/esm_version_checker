@@ -84,7 +84,8 @@ def pip_upgrade(package):
 def pip_or_pull(tool):
     if tool == "esm_tools":
         print("Special case for esm_tools...")
-        esm_tools_dir = esm_rcfile.get_rc_entry("esm_tools_dir")
+        FUNCTION_PATH = esm_rcfile.get_rc_entry("FUNCTION_PATH")
+        esm_tools_dir = os.path.dirname(FUNCTION_PATH)
         esm_tools_repo = Repo(esm_tools_dir)
         try:
             assert not esm_tools_repo.is_dirty()
