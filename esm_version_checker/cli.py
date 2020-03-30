@@ -7,7 +7,9 @@ import pkg_resources
 import subprocess
 import sys
 
+from git import Repo
 import click
+import esm_rcfile
 
 esm_tools_modules = [
         "esm_archiving",
@@ -79,7 +81,26 @@ def pip_upgrade(package):
     else:
         print(package, "is installed in editable mode! No upgrade performed. You may consider doing a git pull...")
 
-
+def pip_or_pull(tool):
+    if tool == "esm_tools":
+        print("Special case for esm_tools...")
+        esm_tools_dir = esm_rcfile.get_rc_entry("esm_tools_dir")
+        esm_tools_repo = Repo(esm_tools_dir)
+        try:
+            assert not esm_tools_repo.is_dirty()
+        except AssertionError:
+            print("You're esm_tools directory is not clean!")
+            print("Please make sure you check in and commit everything before proceeding!")
+            raise
+        try:
+            assert esm_tools_repo.active_branch.name in ["release", "develop"]
+            remote = esm_tools_repo.remote()
+            remote.pull()
+        except AssertionError:
+            print("Only allowed to pull on release or develop! Otherwise, do it yourself please...")
+            raise
+    else:
+        pip_upgrade(tool)
 
 def check_importable_tools():
     for tool in esm_tools_modules:
@@ -97,10 +118,11 @@ def upgrade(tool_to_upgrade="all"):
     if tool_to_upgrade == "all":
         for tool in esm_tools_modules:
             if esm_tools_installed[tool]:
+                pip_or_pull(tool)
                 pip_upgrade(tool)
     else:
         if esm_tools_installed[tool_to_upgrade]:
-            pip_upgrade(tool_to_upgrade)
+            pip_or_pull(tool_to_upgrade)
 
 
 if __name__ == "__main__":

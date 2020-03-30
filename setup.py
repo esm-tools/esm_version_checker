@@ -27,7 +27,10 @@ setup(
 
     packages=find_packages(exclude=('tests',)),
 
-    install_requires=[],
+    install_requires=[
+        "gitpython",
+        "esm_rcfile @ git+https://gitlab.awi.de/esm_tools/esm_rcfile.git",
+        ],
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
