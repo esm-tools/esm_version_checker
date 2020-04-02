@@ -79,7 +79,9 @@ def pip_upgrade(package):
     if not dist_is_editable(package):
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "git+https://gitlab.awi.de/esm_tools/"+package])
     else:
-        print(package, "is installed in editable mode! No upgrade performed. You may consider doing a git pull...")
+        print(package, "is installed in editable mode! No upgrade performed. You may consider doing a git pull here:")
+        package = importlib.import_module(package)
+        print("/".join(package.__file__.split("/")[:-2]))
 
 def pip_or_pull(tool):
     if tool == "esm_tools":
