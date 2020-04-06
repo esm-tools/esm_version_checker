@@ -79,7 +79,7 @@ def pip_install(package):
             "-m",
             "pip",
             "install",
-            "git+https://gitlab.awi.de/esm_tools/" + package,
+            "git+https://github.com/esm-tools/" + package,
         ]
     )
 
