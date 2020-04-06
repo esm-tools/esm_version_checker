@@ -97,7 +97,7 @@ def pip_upgrade(package):
                 "pip",
                 "install",
                 "--upgrade",
-                "git+https://gitlab.awi.de/esm_tools/" + package,
+                "git+https://github.com/esm-tools/" + package,
             ]
         )
     else:
