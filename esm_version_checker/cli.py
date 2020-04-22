@@ -46,7 +46,7 @@ def check(args=None):
             tool_mod = importlib.import_module(tool)
             import_successful = True
             esm_tools_installed[tool] = True
-        except ImportError as e:
+        except ImportError:
             import_successful = False
         if import_successful:
             try:
@@ -111,6 +111,7 @@ def pip_upgrade(package):
 
 def pip_or_pull(tool):
     if tool == "esm_tools":
+        print("esm_versions automatically does git operations for %s" % tool)
         FUNCTION_PATH = esm_rcfile.get_rc_entry("FUNCTION_PATH")
         esm_tools_dir = os.path.dirname(FUNCTION_PATH)
         esm_tools_repo = Repo(esm_tools_dir)
@@ -128,9 +129,9 @@ def pip_or_pull(tool):
             remote.pull()
             print("Pulled new version of ", tool)
         except AssertionError:
-            print(
-                "Only allowed to pull on release or develop! Otherwise, do it yourself please..."
-            )
+            print("Only allowed to pull on release or develop!")
+            print("You are on a branch: %s" % esm_tools_repo.active_branch.name)
+            print("Please pull or change branches by yourself!")
             raise
     else:
         pip_upgrade(tool)
