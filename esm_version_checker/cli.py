@@ -23,6 +23,7 @@ esm_tools_modules = [
     "esm_rcfile",
     "esm_runscripts",
     "esm_tools",
+    "esm_plugin_manager",
     "esm_version_checker",
 ]
 
