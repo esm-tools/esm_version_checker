@@ -28,6 +28,7 @@ setup(
     packages=find_packages(exclude=('tests',)),
 
     install_requires=[
+        "Click>=6.0",
         "gitpython",
         "esm_rcfile @ git+https://github.com/esm-tools/esm_rcfile.git",
         ],
