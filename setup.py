@@ -15,7 +15,7 @@ def read(filename):
 
 setup(
     name="esm_version_checker",
-    version="4.0.1",
+    version="4.0.2",
     url="https://github.com/esm-tools/esm_version_checker",
     license='MIT',
 
