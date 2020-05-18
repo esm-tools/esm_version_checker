@@ -16,7 +16,7 @@ def read(filename):
 setup(
     name="esm_version_checker",
     version="4.0.0",
-    url="https://gitlab.awi.de/esm_tools/esm_version_checker",
+    url="https://github.com/esm-tools/esm_version_checker",
     license='MIT',
 
     author="Paul Gierz",
@@ -29,7 +29,7 @@ setup(
 
     install_requires=[
         "gitpython",
-        "esm_rcfile @ git+https://gitlab.awi.de/esm_tools/esm_rcfile.git",
+        "esm_rcfile @ git+https://github.com/esm-tools/esm_rcfile.git",
         ],
 
     classifiers=[
