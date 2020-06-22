@@ -6,6 +6,7 @@ import os
 import pkg_resources
 import subprocess
 import sys
+import re
 
 from git import Repo
 import click
@@ -89,18 +90,28 @@ def pip_uninstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", package])
 
 
-def pip_upgrade(package):
+def pip_upgrade(package,version=None):
     if not dist_is_editable(package):
-        subprocess.check_call(
-            [
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                "--upgrade",
-                "git+https://github.com/esm-tools/" + package,
-            ]
-        )
+
+        package_name=package
+        if version is not None:
+            package=package+'@'+version
+        try:
+           subprocess.check_call(
+               [
+                   sys.executable,
+                   "-m",
+                   "pip",
+                   "install",
+                   "--upgrade",
+                    "git+https://github.com/esm-tools/" + package,
+                ]
+            )
+        except subprocess.CalledProcessError:
+           print("Installation failed. ")
+           print("One reason might be that you provided an invalid version number.")
+           print("A list of vaild version numbers is available at https://github.com/esm-tools/"+package_name+"/releases")
+
     else:
         print(
             package,
@@ -110,7 +121,7 @@ def pip_upgrade(package):
         print("/".join(package.__file__.split("/")[:-2]))
 
 
-def pip_or_pull(tool):
+def pip_or_pull(tool,version=None):
     if tool == "esm_tools":
         print("esm_versions automatically does git operations for %s" % tool)
         FUNCTION_PATH = esm_rcfile.get_rc_entry("FUNCTION_PATH")
@@ -135,7 +146,7 @@ def pip_or_pull(tool):
             print("Please pull or change branches by yourself!")
             raise
     else:
-        pip_upgrade(tool)
+        pip_upgrade(tool,version)
 
 
 def check_importable_tools():
@@ -159,8 +170,22 @@ def upgrade(tool_to_upgrade="all"):
             if esm_tools_installed[tool]:
                 pip_or_pull(tool)
     else:
+	     # allow the syntax esm_versions updgrade <name_of_tool>=vX.Y.Z or <name_of_tool>==vX.Y.Z
+		  # to install a specific version of a tool, default is None which means that the latest version
+		  # will be installed
+        version=None
+        if '=' in tool_to_upgrade:
+            if '==' in tool_to_upgrade:
+                tool_to_upgrade,version = tool_to_upgrade.split('==')
+            else:    
+                tool_to_upgrade,version = tool_to_upgrade.split('=')
+				# regex to catch version numbers with format vX.Y.Z e.g. v4.10.2	 
+            if not re.match(r'v(?:(\d+\.(?:\d+\.)*\d+))',version):
+                print('Ignoring invalid version number ',version)
+                version=None
+
         if esm_tools_installed[tool_to_upgrade]:
-            pip_or_pull(tool_to_upgrade)
+            pip_or_pull(tool_to_upgrade,version)
 
 
 if __name__ == "__main__":
