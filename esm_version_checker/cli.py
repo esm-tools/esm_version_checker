@@ -103,6 +103,7 @@ def pip_upgrade(package, version=None):
                     "-m",
                     "pip",
                     "install",
+                    "--user",
                     "--upgrade",
                     "git+https://github.com/esm-tools/" + package,
                 ]
