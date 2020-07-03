@@ -103,15 +103,22 @@ def pip_upgrade(package, version=None):
                     "-m",
                     "pip",
                     "install",
+                    "--user",
                     "--upgrade",
                     "git+https://github.com/esm-tools/" + package,
                 ]
             )
         except subprocess.CalledProcessError:
-            print("Installation failed. ")
-            print("One reason might be that you provided an invalid version number.")
+            print("Installation failed. Possible reasons are:")
+            print("- You tried to pull a branch that does not exist")
             print(
-                "A list of vaild version numbers is available at https://github.com/esm-tools/"
+                "  A list of vaild branches is available at https://github.com/esm-tools/"
+                + package_name
+                + "/branches"
+            )
+            print("- You provided an invalid version number.")
+            print(
+                "  A list of vaild version numbers is available at https://github.com/esm-tools/"
                 + package_name
                 + "/releases"
             )
@@ -183,10 +190,6 @@ def upgrade(tool_to_upgrade="all"):
                 tool_to_upgrade, version = tool_to_upgrade.split("==")
             else:
                 tool_to_upgrade, version = tool_to_upgrade.split("=")
-            # regex to catch version numbers with format vX.Y.Z e.g. v4.10.2
-            if not re.match(r"v(?:(\d+\.(?:\d+\.)*\d+))", version):
-                print("Ignoring invalid version number ", version)
-                version = None
 
         if esm_tools_installed[tool_to_upgrade]:
             pip_or_pull(tool_to_upgrade, version)
