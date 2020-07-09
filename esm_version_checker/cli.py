@@ -97,17 +97,31 @@ def pip_upgrade(package, version=None):
         if version is not None:
             package = package + "@" + version
         try:
-            subprocess.check_call(
-                [
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "install",
-                    "--user",
-                    "--upgrade",
-                    "git+https://github.com/esm-tools/" + package,
-                ]
-            )
+            # --user causes an error in a venv (which is used e.g. in CI)
+            # explanation: https://github.com/pypa/pip/issues/4141 
+            if bool(os.environ.get("VIRTUAL_ENV")):
+                subprocess.check_call(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        "--upgrade",
+                        "git+https://github.com/esm-tools/" + package,
+                    ]
+                )
+            else:
+                subprocess.check_call(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        "--user",
+                        "--upgrade",
+                        "git+https://github.com/esm-tools/" + package,
+                    ]
+                )
         except subprocess.CalledProcessError:
             print("Installation failed. Possible reasons are:")
             print("- You tried to pull a branch that does not exist")
