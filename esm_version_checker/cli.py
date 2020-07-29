@@ -98,7 +98,7 @@ def pip_upgrade(package, version=None):
             package = package + "@" + version
         try:
             # --user causes an error in a venv (which is used e.g. in CI)
-            # explanation: https://github.com/pypa/pip/issues/4141 
+            # explanation: https://github.com/pypa/pip/issues/4141
             if bool(os.environ.get("VIRTUAL_ENV")):
                 subprocess.check_call(
                     [
