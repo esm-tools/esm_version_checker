@@ -44,6 +44,7 @@ def check(args=None):
     print("You are using the following esm_tools versions:")
     print("-----------------------------------------------")
     for tool in esm_tools_modules:
+        message = f"{tool} : unknown version!"
         try:
             tool_mod = importlib.import_module(tool)
             import_successful = True
@@ -64,8 +65,7 @@ def check(args=None):
             repo_path = editable_dist_location(tool)
             repo = Repo(repo_path)
             message += f" (development install, on branch: {repo.active_branch.name})"
-        else:
-            message = f"{tool} : unknown version!"
+
         print(message)
 
 
