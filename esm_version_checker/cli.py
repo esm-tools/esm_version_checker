@@ -52,15 +52,21 @@ def check(args=None):
             import_successful = False
         if import_successful:
             try:
-                print(tool, ":", tool_mod.__version__)
+                message = tool + ": " + tool_mod.__version__
             except AttributeError:
                 try:
-                    print(tool, ":", pkg_resources.get_distribution(tool).version)
-                except:
-                    # print("Oops! %s has no version??" % tool)
+                    message = tool + ": " + pkg_resources.get_distribution(tool).version
+                except AttributeError:
+                    message = f"Opps! {tool} has no version??"
+                except Exception:  # Any other exception:
                     raise
+        if dist_is_editable(tool):
+            repo_path = editable_dist_location(tool)
+            repo = Repo(repo_path)
+            message += f" (development install, on branch: {repo.active_branch.name})"
         else:
-            print(tool, ": unknown version!")
+            message = f"{tool} : unknown version!"
+        print(message)
 
 
 # PG: Blatant theft:
@@ -72,6 +78,15 @@ def dist_is_editable(dist):
         if os.path.isfile(egg_link):
             return True
     return False
+
+
+def editable_dist_location(dist):
+    """Determines where an editable dist is installed"""
+    for path_item in sys.path:
+        egg_link = os.path.join(path_item, dist.replace("_", "-") + ".egg-link")
+        if os.path.isfile(egg_link):
+            return open(egg_link).readlines()[0].strip()
+    return None
 
 
 def pip_install(package):
