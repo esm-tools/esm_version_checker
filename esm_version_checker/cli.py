@@ -9,6 +9,7 @@ import sys
 import re
 
 from git import Repo
+from git.exc import GitCommandError
 import click
 import esm_rcfile
 
@@ -64,7 +65,11 @@ def check(args=None):
         if dist_is_editable(tool):
             repo_path = editable_dist_location(tool)
             repo = Repo(repo_path)
-            message += f" (development install, on branch: {repo.active_branch.name})"
+            try:
+                describe = repo.git.describe(tags=True, dirty=True)
+            except GitCommandError:
+                describe = "Error"
+            message += f" (development install, on branch: {repo.active_branch.name}, describe={describe})"
 
         print(message)
 
