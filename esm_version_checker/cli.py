@@ -4,6 +4,7 @@
 import importlib
 import os
 import pkg_resources
+import site
 import subprocess
 import sys
 import re
@@ -39,6 +40,30 @@ def main(args=None):
     # click.echo(help_message)
     return 0
 
+@main.command()
+def nuke(args=None):
+    print("You're pushing the red button. Duck and cover!")
+    print("----------------------------------------------")
+    remove_list = []
+    for package in os.listdir(site.getusersitepackages()):
+        for tool_name in esm_tools_modules:
+            if tool_name in package or tool_name.replace("_", "-") in package:
+                remove_list.append(os.path.join(site.getusersitepackages(), package))
+    print("Will remove the following")
+    print("Python packages:")
+    for package in remove_list:
+        print(f"* {package}")
+    print("Binary programs:")
+    for path_part in os.environ.get("PATH").split(":"):
+        if os.path.exists(path_part):
+            for binary in os.listdir(path_part):
+                if "esm" in binary:
+                    remove_list.append(os.path.join(path_part, binary))
+                    print(f"* {os.path.join(path_part, binary)}")
+    if click.confirm('Do you want to continue?'):
+        for esm_thing in remove_list:
+            print(f"* Removing {esm_thing}")
+            os.remove(esm_thing)
 
 @main.command()
 def check(args=None):
