@@ -40,6 +40,7 @@ def main(args=None):
     # click.echo(help_message)
     return 0
 
+
 @main.command()
 def nuke(args=None):
     print("You're pushing the red button. Duck and cover!")
@@ -60,10 +61,11 @@ def nuke(args=None):
                 if "esm" in binary:
                     remove_list.append(os.path.join(path_part, binary))
                     print(f"* {os.path.join(path_part, binary)}")
-    if click.confirm('Do you want to continue?'):
+    if click.confirm("Do you want to continue?"):
         for esm_thing in remove_list:
             print(f"* Removing {esm_thing}")
             os.remove(esm_thing)
+
 
 @main.command()
 def check(args=None):
