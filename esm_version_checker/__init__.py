@@ -3,3 +3,5 @@
 __version__ = "4.5.0"
 __author__ = "Paul Gierz <pgierz@awi.de>"
 __all__ = []
+
+from .esm_version_checker import *
