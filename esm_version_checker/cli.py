@@ -64,7 +64,7 @@ def nuke(args=None):
     if click.confirm("Do you want to continue?"):
         for esm_thing in remove_list:
             print(f"* Removing {esm_thing}")
-            os.remove(esm_thing)
+            subprocess.run(["rm", "-rf", esm_thing])
 
 
 @main.command()
