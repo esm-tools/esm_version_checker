@@ -42,6 +42,7 @@ def main(args=None):
     # click.echo(help_message)
     return 0
 
+
 def user_owns(binary):
     """True or False if user owns binary"""
     owner = pathlib.Path(binary).owner()
