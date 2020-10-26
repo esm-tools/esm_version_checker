@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
 """Console script for esm_version_checker."""
+import getpass
 import importlib
 import os
+import pathlib
 import pkg_resources
+import re
 import site
 import subprocess
 import sys
-import re
 
 from git import Repo
 from git.exc import GitCommandError
@@ -40,9 +42,14 @@ def main(args=None):
     # click.echo(help_message)
     return 0
 
+def user_owns(binary):
+    """True or False if user owns binary"""
+    owner = pathlib.Path(binary).owner()
+    return owner == getpass.getuser()
+
 
 @main.command()
-def nuke(args=None):
+def clean(args=None):
     print("You're pushing the red button. Duck and cover!")
     print("----------------------------------------------")
     remove_list = []
@@ -58,7 +65,7 @@ def nuke(args=None):
     for path_part in os.environ.get("PATH").split(":"):
         if os.path.exists(path_part):
             for binary in os.listdir(path_part):
-                if "esm" in binary:
+                if "esm" in binary and user_owns(binary):
                     remove_list.append(os.path.join(path_part, binary))
                     print(f"* {os.path.join(path_part, binary)}")
     if click.confirm("Do you want to continue?"):
