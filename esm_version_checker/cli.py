@@ -89,7 +89,7 @@ def check(args=None):
             import_successful = False
         if import_successful:
             try:
-                message = tool + ": " + tool_mod.__version__
+                message = tool + ": " + tool_mod.__version__ + " file: " + tool_mod.__file__
             except AttributeError:
                 try:
                     message = tool + ": " + pkg_resources.get_distribution(tool).version
