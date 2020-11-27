@@ -13,28 +13,20 @@ import sys
 
 from git import Repo
 from git.exc import GitCommandError
+from github import Github, GithubException
 import click
 import esm_rcfile
 
-esm_tools_modules = [
-    "esm_archiving",
-    "esm_autotests",
-    "esm_calendar",
-    "esm_database",
-    "esm_environment",
-    "esm_master",
-    "esm_parser",
-    "esm_profile",
-    "esm_rcfile",
-    "esm_runscripts",
-    "esm_tools",
-    "esm_plugin_manager",
-    "esm_version_checker",
-    "esm_motd",
-]
+g = Github()
+
+try:
+    repos = g.get_organization("esm-tools").get_repos()
+    esm_tools_modules = [repo.full_name.replace("esm-tools/", "") for repo in repos]
+except: 
+    print ("No repos found, connection to github.com might be broken.")
+    sys.exit(1)
 
 esm_tools_installed = {tool: False for tool in esm_tools_modules}
-
 
 @click.group()
 def main(args=None):
