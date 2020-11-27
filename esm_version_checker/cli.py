@@ -30,6 +30,7 @@ esm_tools_modules = [
     "esm_tools",
     "esm_plugin_manager",
     "esm_version_checker",
+    "esm_motd",
 ]
 
 esm_tools_installed = {tool: False for tool in esm_tools_modules}
