@@ -13,18 +13,24 @@ import sys
 
 from git import Repo
 from git.exc import GitCommandError
-from github import Github, GithubException
+# from github import Github, GithubException
 import click
 import esm_rcfile
 
-g = Github()
 
-try:
-    repos = g.get_organization("esm-tools").get_repos()
-    esm_tools_modules = [repo.full_name.replace("esm-tools/", "") for repo in repos]
-except: 
-    print ("No repos found, connection to github.com might be broken.")
-    sys.exit(1)
+installed_packages = list(pkg_resources.working_set)
+esm_tools_modules = [ lib.key for lib in installed_packages if lib.key.startswith('esm-') ]
+esm_tools_modules.sort()
+
+
+# g = Github()
+# 
+# try:
+    # repos = g.get_organization("esm-tools").get_repos()
+    # esm_tools_modules = [repo.full_name.replace("esm-tools/", "") for repo in repos]
+# except: 
+    # print ("No repos found, connection to github.com might be broken.")
+    # sys.exit(1)
 
 esm_tools_installed = {tool: False for tool in esm_tools_modules}
 
