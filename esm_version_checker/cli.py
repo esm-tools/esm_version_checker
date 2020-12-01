@@ -19,7 +19,9 @@ import esm_rcfile
 
 
 installed_packages = list(pkg_resources.working_set)
-esm_tools_modules = [ lib.key for lib in installed_packages if lib.key.startswith('esm-') ]
+esm_tools_modules = [lib.key for lib in installed_packages if lib.key.startswith('esm-')]
+# project names have hyphen but the module names have underscore
+esm_tools_modules = [i.replace('-', '_') for i in esm_tools_modules]
 esm_tools_modules.sort()
 
 
