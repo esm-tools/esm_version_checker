@@ -175,22 +175,25 @@ def clean(**kwargs):
     """Removes (with force) the whole ESM-Tools system."""
     print("You're pushing the red button. Duck and cover!")
     print("----------------------------------------------")
+
+    esm_tools_modules = get_esm_packages()
     remove_list = []
     for package in os.listdir(site.getusersitepackages()):
         for tool_name in esm_tools_modules:
             if tool_name in package or tool_name.replace("_", "-") in package:
                 remove_list.append(os.path.join(site.getusersitepackages(), package))
     print("Will remove the following")
-    print("Python packages:")
+    print("  Python packages:")
     for package in remove_list:
-        print(f"* {package}")
-    print("Binary programs:")
+        print(f"    {package}")
+    print("  Binary programs:")
     for path_part in os.environ.get("PATH").split(":"):
         if os.path.exists(path_part):
             for binary in os.listdir(path_part):
-                if "esm" in binary and user_owns(binary):
-                    remove_list.append(os.path.join(path_part, binary))
-                    print(f"* {os.path.join(path_part, binary)}")
+                binary_path = os.path.join(path_part, binary)
+                if binary.startswith("esm_") and user_owns(binary_path):
+                    remove_list.append(binary_path)
+                    print(f"    {binary_path}")
     if click.confirm("Do you want to continue?"):
         for esm_thing in remove_list:
             print(f"* Removing {esm_thing}")
