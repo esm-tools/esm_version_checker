@@ -85,6 +85,10 @@ def get_esm_packages():
     """
     global global_vars
 
+    # simple static variable trick to print GitHub connection message only once
+    if not hasattr(get_esm_packages, "only_once"):
+        get_esm_packages.only_once = True
+    
     # if --from_github is provided in the call to esm_versions
     # connect to GitHub and get the list of modules from there. This can 
     # sometimes be problematic since sometimes GitHub may refuse the
@@ -93,7 +97,9 @@ def get_esm_packages():
     if global_vars.from_github == True:
         g = Github()
         try:
-            print("Connecting to GitHub")
+            if get_esm_packages.only_once:
+                print("Connecting to GitHub")
+                get_esm_packages.only_once = False  # turn off the static flag
             repos = g.get_organization("esm-tools").get_repos()
             esm_tools_modules = [repo.full_name.replace("esm-tools/", "") for repo in repos]
         except: 
