@@ -27,6 +27,7 @@ setup(
         "Click>=6.0",
         "gitpython",
         "PyGithub",
+        "tabulate",
         "esm_rcfile @ git+https://github.com/esm-tools/esm_rcfile.git",
     ],
     classifiers=[
