@@ -156,7 +156,11 @@ def get_esm_package_attributes(tool):
         except GitCommandError:
             describe = "Error"
             
-        branch = repo.active_branch.name
+        if not repo.head.is_detached:
+            branch = repo.active_branch.name
+        else:
+            sha = repo.head.commit.name_rev
+            branch = f"DETACHED at {sha}"
         # message += f" (development install, on branch: {repo.active_branch.name}, describe={describe})"
         
     attr_dict = {'version' : version,
