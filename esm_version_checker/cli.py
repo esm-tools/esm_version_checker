@@ -456,8 +456,8 @@ def upgrade(tool_to_upgrade="all"):
 @main.command()
 @global_options_decorator
 @click.argument("package", nargs=1, type=str)
-@click.argument("attribute", nargs=1, type=str)
-def get(package, attribute, **kwargs):
+@click.argument("attribute", nargs=1, type=str, default="all")
+def get(package, attribute="all", **kwargs):
     """Prints an attribute of a package.
     
     Arguments
@@ -474,17 +474,24 @@ def get(package, attribute, **kwargs):
         print(f"ERROR: {package} is not found in the installed packages")
         sys.exit(1)
     
-    # error check
-    attributes = ["version", "file_path", "branch", "describe"]
-    if attribute not in attributes:
-        print(f"ERROR: {attribute} is not a valid attribute. List of valid package attributes:")
-        for attribute in attributes:
-            print("  " + attribute)
-        sys.exit(1)
-    
-    # get the package attributes
     attr_dict = get_esm_package_attributes(package)
-    print(attr_dict[attribute])
+    # error check
+    if attribute != "all":
+        attributes = ["version", "file_path", "branch", "describe"]
+        if attribute not in attributes:
+            print(f"ERROR: {attribute} is not a valid attribute. List of valid package attributes:")
+            for attribute in attributes:
+                print("  " + attribute)
+            sys.exit(1)
+        # get the package attributes
+        print(attr_dict[attribute])
+    else:
+        print(package)
+        print("-"*len(package))
+        print(f"Version:\t {attr_dict['version']}")
+        print(f"File Path:\t {attr_dict['file_path']}")
+        print(f"Branch:\t\t {attr_dict['branch']}")
+        print(f"Git Describe:\t {attr_dict['describe']}")
 
 
 
