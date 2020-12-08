@@ -159,7 +159,7 @@ def get_esm_package_attributes(tool):
         if not repo.head.is_detached:
             branch = repo.active_branch.name
         else:
-            sha = repo.head.commit.name_rev
+            sha = repo.head.commit.name_rev[:7]
             branch = f"DETACHED at {sha}"
         # message += f" (development install, on branch: {repo.active_branch.name}, describe={describe})"
         
