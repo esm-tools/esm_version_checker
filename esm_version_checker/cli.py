@@ -18,6 +18,8 @@ import click
 import esm_rcfile
 from tabulate import tabulate
 import shutil
+import configparser
+from packaging.version import parse as version_parse
 
 
 class GlobalVars:
@@ -142,8 +144,13 @@ def get_esm_package_attributes(tool):
     # try to get the package information
     try:
         distribution = pkg_resources.get_distribution(tool)
-        version = distribution.version
         file_path = distribution.module_path
+
+        # deniz: version numbers from PKG_INFO and setup.cfg might differ
+        # Usually setup.cfg is more up to date since it is updated by bumpversion
+        v1 = distribution.version  # version from PKG_INFO
+        v2 = '0.0.0' 
+            
     except pkg_resources.ResolutionError:
         print(f"Error: something is wrong with the package {tool}")
     
@@ -162,6 +169,13 @@ def get_esm_package_attributes(tool):
             sha = repo.head.commit.name_rev[:7]
             branch = f"DETACHED at {sha}"
         # message += f" (development install, on branch: {repo.active_branch.name}, describe={describe})"
+
+        config = configparser.ConfigParser()
+        config.read(os.path.join(file_path, 'setup.cfg'))
+        v2 = config['bumpversion']['current_version'] 
+
+    # Greater version number will be taken
+    version = max(version_parse(v1), version_parse(v2))
         
     attr_dict = {'version' : version,
         'file_path' : file_path,
