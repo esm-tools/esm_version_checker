@@ -471,6 +471,14 @@ def upgrade(tool_to_upgrade="all"):
             pip_or_pull(tool_to_upgrade, version)
 
 
+
+# PG: People never know what word to use. So, we allow both...
+@main.command()
+@click.argument("tool_to_upgrade", default="all")
+def update(tool_to_upgrade="all"):
+    """Like upgrate"""
+    upgrade(tool_to_upgrade)
+
 @main.command()
 @global_options_decorator
 @click.argument("package", nargs=1, type=str)
