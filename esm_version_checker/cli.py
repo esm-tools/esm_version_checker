@@ -398,21 +398,20 @@ def pip_or_pull(tool, version=None):
         try:
             assert not esm_tools_repo.is_dirty()
         except AssertionError:
-            print("Your esm_tools directory is not clean!")
+            print("WARNING: Your esm_tools directory" + esm_tools_dir + "is not clean and cannot be updated!")
             print(
-                "Please make sure you check in and commit everything before proceeding!"
+                "WARNING: Please make sure you check in and commit everything before proceeding!"
             )
-            raise
         try:
             assert esm_tools_repo.active_branch.name in ["release", "develop"]
             remote = esm_tools_repo.remote()
             remote.pull()
             print("Pulled new version of ", tool)
         except AssertionError:
-            print("Only allowed to pull on release or develop!")
-            print("You are on a branch: %s" % esm_tools_repo.active_branch.name)
-            print("Please pull or change branches by yourself!")
-            raise
+            print("WARNING: Only allowed to pull on release or develop!")
+            print("WARNING: You are on a branch: %s" % esm_tools_repo.active_branch.name)
+            print("WARNING: Please pull or change branches by yourself!")
+
     else:
         pip_upgrade(tool, version)
 
