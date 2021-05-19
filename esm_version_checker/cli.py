@@ -172,7 +172,11 @@ def get_esm_package_attributes(tool):
 
         config = configparser.ConfigParser()
         config.read(os.path.join(file_path, 'setup.cfg'))
-        v2 = config['bumpversion']['current_version'] 
+        try:
+            v2 = config['bumpversion']['current_version'] 
+        except KeyError:
+            # v2 is defined to a default above
+            pass
 
     # Greater version number will be taken
     version = max(version_parse(v1), version_parse(v2))
