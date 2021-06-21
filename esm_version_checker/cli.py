@@ -5,11 +5,13 @@ import getpass
 import importlib
 import os
 import pathlib
-import pkg_resources
 import re
 import site
 import subprocess
 import sys
+import shutil
+import time
+from packaging.version import parse as version_parse
 
 from git import Repo
 from git.exc import GitCommandError
@@ -17,9 +19,10 @@ from github import Github, GithubException
 import click
 import esm_rcfile
 from tabulate import tabulate
-import shutil
-import configparser
-from packaging.version import parse as version_parse
+import requests
+import colorama
+from colorama import Fore, Style
+from bs4 import BeautifulSoup
 
 
 class GlobalVars:
@@ -39,6 +42,36 @@ class GlobalVars:
     from_github = False  
     esm_tools_github_url = "https://github.com/esm-tools/"
     esm_tools_installed = {}
+    
+    # All tools and binaries are hard-coded here to avoid problems arising from
+    # using globbing and matching (eg. esm-*)
+    # NOTE: not all of these tools might be installed in the users setup. This
+    # will be checked later on
+    ESM_TOOLS_MODULES = [
+        "esm_archiving",
+        "esm_calendar",
+        "esm_cleanup",
+        "esm_database",
+        "esm_environment",
+        "esm_master",
+        "esm_motd",
+        "esm_parser",
+        "esm_plugin_manager",
+        "esm_profile",
+        "esm_rcfile",
+        "esm_runscripts",
+        "esm_tools",
+        "esm_utilities",
+        "esm_version_checker"
+    ]
+    
+    ESM_TOOLS_BINARIES = [
+        "esm_database", 
+        "esm_master",
+        "esm_runscripts",
+        "esm_versions"
+    ] 
+    
 
 global_vars = GlobalVars()
 
@@ -107,15 +140,20 @@ def get_esm_packages():
         except: 
             print ("ERROR: No repos found or request to GitHub got rejected.")
             sys.exit(1)
+
+    # or use the hard coded ones given in the beginning
+    else:
+        esm_tools_modules = global_vars.ESM_TOOLS_MODULES
             
     # retrieve the package list from the locally installed modules
-    else:
-        installed_packages = list(pkg_resources.working_set)
-        esm_tools_modules = [lib.key for lib in installed_packages if lib.key.startswith('esm-')]
+    # else:
+        # installed_packages = list(pkg_resources.working_set)
+        # esm_tools_modules = [lib.key for lib in installed_packages if lib.key.startswith('esm-')]
         # project names have hyphen but the module names have underscore
-        esm_tools_modules = [mod.replace('-', '_') for mod in esm_tools_modules]
+        # esm_tools_modules = [mod.replace('-', '_') for mod in esm_tools_modules]
 
-    esm_tools_modules.sort()
+    # esm_tools_modules.sort()
+    
 
     return esm_tools_modules
 
@@ -140,54 +178,76 @@ def get_esm_package_attributes(tool):
     file_path = ""
     branch = ""
     describe = ""
+    latest_version = ""
+    upgrade_required = False
+    import_passed = False
     
     # try to get the package information
-    try:
-        distribution = pkg_resources.get_distribution(tool)
-        file_path = distribution.module_path
+    try: 
+        tool_module = importlib.import_module(tool)
+        import_passed = True
+    except ModuleNotFoundError: 
+        tool_module = None
+        # print(f"ERROR: {tool} can not be imported. Exiting")
+        # sys.exit(1)
 
-        # deniz: version numbers from PKG_INFO and setup.cfg might differ
-        # Usually setup.cfg is more up to date since it is updated by bumpversion
-        v1 = distribution.version  # version from PKG_INFO
-        v2 = '0.0.0' 
-            
-    except pkg_resources.ResolutionError:
-        print(f"Error: something is wrong with the package {tool}")
-    
-    # message = f"{tool} : unknown version!"
-    if dist_is_editable(tool):
-        repo_path = editable_dist_location(tool)
-        repo = Repo(repo_path)
-        try:
-            describe = repo.git.describe(tags=True, dirty=True)
-        except GitCommandError:
-            describe = "Error"
-            
-        if not repo.head.is_detached:
-            branch = repo.active_branch.name
-        else:
-            sha = repo.head.commit.name_rev[:7]
-            branch = f"DETACHED at {sha}"
-        # message += f" (development install, on branch: {repo.active_branch.name}, describe={describe})"
-
-        config = configparser.ConfigParser()
-        config.read(os.path.join(file_path, 'setup.cfg'))
-        try:
-            v2 = config['bumpversion']['current_version'] 
-        except KeyError:
-            # v2 is defined to a default above
-            pass
-
-    # Greater version number will be taken
-    version = max(version_parse(v1), version_parse(v2))
+    if import_passed:
+        # importlib will read the version information from __init__.py
+        # source: https://packaging.python.org/guides/single-sourcing-package-version/
+        # version imported from pkg_resources does NOT read the correct version.
+        # __init__.py and setup.py are always updated by bumpversion and store 
+        # the correct version number
+        version = getattr(tool_module, "__version__", None)
         
-    attr_dict = {'version' : version,
-        'file_path' : file_path,
-        'branch' : branch,
-        'describe' : describe}
+        # __path__ holds the directory that hosts __init__.py
+        file_path = tool_module.__path__[0]
+        file_path = file_path.split(os.path.sep)[:-1]
+        file_path = os.path.sep.join(file_path) + os.path.sep
+        
+        # message = f"{tool} : unknown version!"
+        if dist_is_editable(tool):
+            repo_path = editable_dist_location(tool)
+            repo = Repo(repo_path)
+            try:
+                describe = repo.git.describe(tags=True, dirty=True)
+            except GitCommandError:
+                describe = "Error"
+                
+            if not repo.head.is_detached:
+                branch = repo.active_branch.name
+            else:
+                sha = repo.head.commit.name_rev[:7]
+                branch = f"DETACHED at {sha}"
+            # message += f" (development install, on branch: {repo.active_branch.name}, describe={describe})"
+            
+            # Returns eg. 5.1.7 if succesful or None
+            latest_version = get_latest_version(tool)
+            
+            upgrade_required = version_parse(version) < version_parse(latest_version)
+            
+        attr_dict = {
+            'version' : version,
+            'file_path' : file_path,
+            'branch' : branch,
+            'describe' : describe,
+            'latest_version' : latest_version,
+            'upgrade_required' : upgrade_required,
+            'importable' : True
+        }
+                
+    # import failed for some reason
+    else:
+        attr_dict = {
+            'version' : "Not installed",
+            'file_path' : None,
+            'branch' : None,
+            'describe' : None, 
+            'latest_version' : None,
+            'upgrade_required' : False,
+            'importable' : False
+        }
 
     return attr_dict
-
 
 
 def user_owns(binary):
@@ -232,6 +292,7 @@ def clean(**kwargs):
 @main.command()
 @global_options_decorator
 @click.option("--package", "package", default=None, help="get information about this package only")
+@click.option("--no-color", is_flag=True, help="use default console colors, rather than red, green, yellow")
 def check(**kwargs):
     """Prints the ESM-Tools package information.
     
@@ -243,12 +304,12 @@ def check(**kwargs):
     
     Results will be printed as a table or line-by-line if the terminal width is small 
     """
+    colorama.init(autoreset=True)
     
     # 2D list that contains the information table
     headers = ['package_name', 'version', 'file', 'branch', 'tags']
     table = []   
     
-    global global_vars
     esm_tools_modules = get_esm_packages()    
 
     # --package is passed on the command-line, we are dealing with a single package
@@ -261,15 +322,77 @@ def check(**kwargs):
             esm_tools_modules = [package]
     
     attr_dict_all = {}  # attributes for all tools
-    for tool in esm_tools_modules:
+    extra_messages = []
+
+    for index, tool in enumerate(esm_tools_modules, start=1):
+        # mini progress bar
+        msg = f"::: Obtaining information for the tool: {tool:<20} [{index}/{len(esm_tools_modules)}]"
+        sys.stdout.write(msg)
+        sys.stdout.flush()
+    
         # get the package attributes
         attr_dict = get_esm_package_attributes(tool)
         attr_dict_all[tool] = attr_dict
-        keys = ['version', 'file_path', 'branch', 'describe']
-        version, file_path, branch, describe = [attr_dict.get(k) for k in keys]
+
+        attr_dict_all[tool]['tool'] = tool
+        attr_dict_all[tool]['tool_print'] = tool
+
+        # _print variables have color formatting and they will get printed
+        tool_print     = tool
+        version        = version_print        = attr_dict['version']
+        file_path      = file_path_print      = attr_dict['file_path']
+        branch         = branch_print         = attr_dict['branch']
+        describe       = describe_print       = attr_dict['describe']
+        latest_version = latest_version_print = attr_dict['latest_version']
+        upgrade_required = upgrade_required_print = attr_dict['upgrade_required']
+        importable       = importable_print   = attr_dict["importable"]
         
-        # append the current line of information to the table
-        table.append([tool, version, file_path, branch, describe])
+        # color code:
+        # - GREEN: the tools is up to date
+        # - YELLOW: upgrade required
+        # - RED: tool is not installed or not importable
+        upgrade_color = Fore.YELLOW if upgrade_required else Fore.GREEN
+        not_available_color = Fore.RED
+        
+        # if --no-color is provided then cancel the color formatting. This can
+        # be useful for the color blind people.
+        if kwargs["no_color"]:
+            upgrade_color = not_available_color = colorama.Style.RESET_ALL
+
+        tool_print      = f"{upgrade_color}{tool}{Style.RESET_ALL}"
+        version_print   = f"{upgrade_color}{version}{Style.RESET_ALL}"
+        if upgrade_required:
+            version_print += f"{upgrade_color} (Latest: {latest_version}){Style.RESET_ALL}"
+        file_path_print = f"{upgrade_color}{file_path}{Style.RESET_ALL}"
+        branch_print    = f"{upgrade_color}{branch}{Style.RESET_ALL}"
+        describe_print  = f"{upgrade_color}{describe}{Style.RESET_ALL}"
+            
+        if not importable:
+            tool_print      = f"{not_available_color}{tool}{Style.RESET_ALL}"
+            version_print   = f"{not_available_color}{version}{Style.RESET_ALL}"
+            file_path_print = f"{not_available_color}{file_path}{Style.RESET_ALL}"
+            branch_print    = f"{not_available_color}{branch}{Style.RESET_ALL}"
+            describe_print  = f"{not_available_color}{describe}{Style.RESET_ALL}"
+
+        if upgrade_required:
+            extra_messages.append(
+                f"- upgrade required for {tool}. Use: "\
+                f"{upgrade_color}esm_versions upgrade {tool}{Style.RESET_ALL}")
+                
+        # also set these for the all single package prints
+        attr_dict_all[tool]['tool_print'] = tool_print
+        attr_dict_all[tool]['version_print'] = version_print
+        attr_dict_all[tool]['file_path_print'] = file_path_print
+        attr_dict_all[tool]['branch_print'] = branch_print
+        attr_dict_all[tool]['describe_print'] = describe_print
+
+        # construct the table for tabular output
+        table.append([tool_print, version_print, file_path_print, 
+            branch_print, describe_print])
+        
+        # pause for a little to show the beautiful progress bar
+        time.sleep(0.5)  
+        clear_line(len(msg))
         
     # ===
     # print the results
@@ -284,15 +407,21 @@ def check(**kwargs):
     elif terminal_width < 150:
         for tool in esm_tools_modules:
             # report_single_package(tool, version, file_path, branch, describe)
-            report_single_package(tool, attr_dict_all[tool]['version'], 
-                attr_dict_all[tool]['file_path'], attr_dict_all[tool]['branch'], 
-                attr_dict_all[tool]['describe'])
+            report_single_package(attr_dict_all[tool]['tool_print'],
+                attr_dict_all[tool]['version_print'], 
+                attr_dict_all[tool]['file_path_print'], 
+                attr_dict_all[tool]['branch_print'], 
+                attr_dict_all[tool]['describe_print'])
             print()
 
     # print the full table 
     else: 
         print(tabulate(table, headers, tablefmt='psql')) 
-
+        
+    # Print the extra messages such as upgrades 
+    for line in extra_messages:
+        print(line)
+        
 
 # PG: Blatant theft:
 # https://stackoverflow.com/questions/42582801/check-whether-a-python-package-has-been-installed-in-editable-egg-link-mode
@@ -474,13 +603,13 @@ def upgrade(tool_to_upgrade="all"):
             pip_or_pull(tool_to_upgrade, version)
 
 
-
 # PG: People never know what word to use. So, we allow both...
 @main.command()
 @click.argument("tool_to_upgrade", default="all")
 def update(tool_to_upgrade="all"):
     """Like upgrate"""
     upgrade(tool_to_upgrade)
+
 
 @main.command()
 @global_options_decorator
@@ -523,7 +652,6 @@ def get(package, attribute="all", **kwargs):
         print(f"Git Describe:\t {attr_dict['describe']}")
 
 
-
 def report_single_package(package, version, file_path, branch, describe):
     """Nice output similar to the tree command in Linux"""
     tee = u"\u251C"
@@ -536,6 +664,50 @@ def report_single_package(package, version, file_path, branch, describe):
     print(elbow + hline + f" tags: {describe}")
 
 
+def clear_line(nchars):    
+    """Clears the printed characters on the current line"""
+    line_eraser = '\b' * nchars   # go back nchars
+    line_eraser += ' ' * nchars   # overwrite with whitespace
+    line_eraser += '\b' * nchars  # go back again
+    sys.stdout.write(line_eraser)
+    sys.stdout.flush()
+
+
+def get_latest_version(tool):
+    """uses web scraping to retrieve the latest version of the tool. `tool`
+    is the selected ESM-Tools string (eg. esm_master). Returns the version if
+    http request returns succesful and regex is matched. If not None is 
+    returned.
+    """
+    url = f"https://github.com/esm-tools/{tool}/tags"
+    
+    try: 
+        page = requests.get(url)
+    except requests.exceptions.RequestException:
+        print(f"Warning: unable to retrieve the latest version information for {tool}")
+        sys.exit()
+        
+        version = None
+        return version
+        
+    soup = BeautifulSoup(page.content, 'html.parser')
+    
+    # get the first h4
+    repo_content = soup.find("div", id="repo-content-pjax-container")
+    h4 = repo_content.find_all('h4')[0]
+
+    version_pattern = "[0-9]+\.[0-9]+\.[0-9]+"
+    match = re.search(version_pattern, h4.text)
+   
+    if match is None:
+        print(f"WARNING: esm_versions can't read the version from {url}")
+
+        version = None
+        return None
+
+    version = match.group()    # eg. 5.1.7
+    return version
+    
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
