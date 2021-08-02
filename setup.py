@@ -30,6 +30,7 @@ setup(
         "tabulate",
         "packaging",
         "esm_rcfile @ git+https://github.com/esm-tools/esm_rcfile.git",
+        "typing_extensions>=3.10.0.0",
     ],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
