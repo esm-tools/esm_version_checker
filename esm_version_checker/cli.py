@@ -71,7 +71,7 @@ class GlobalVars:
         "esm_runscripts",
         "esm_versions"
     ] 
-    
+
 
 global_vars = GlobalVars()
 
@@ -85,7 +85,7 @@ def global_options_decorator(func):
         func = option(func)
     return func
 
-            
+
 @click.group()
 @global_options_decorator
 def main(**kwargs):
@@ -107,8 +107,8 @@ def main(**kwargs):
     
     return 0
 
-           
-            
+
+
 def get_esm_packages():
     """Gets the list of the installed ESM-Tools packages either locally or from 
     the GitHub repository
@@ -153,7 +153,7 @@ def get_esm_packages():
         # esm_tools_modules = [mod.replace('-', '_') for mod in esm_tools_modules]
 
     # esm_tools_modules.sort()
-    
+
 
     return esm_tools_modules
 
@@ -173,6 +173,9 @@ def get_esm_package_attributes(tool):
         dictionary of attributes. 
     """
 
+    home_dir = os.path.expanduser('~')
+    home_dir = os.path.realpath(home_dir)
+# 
     # initialize the package table information
     version = ""
     file_path = ""
@@ -200,16 +203,21 @@ def get_esm_package_attributes(tool):
         version = getattr(tool_module, "__version__", None)
         
         # __path__ holds the directory that hosts __init__.py
-        file_path = tool_module.__path__[0]
+        file_path = os.path.realpath(tool_module.__path__[0])
         file_path = file_path.split(os.path.sep)[:-1]
         file_path = os.path.sep.join(file_path) + os.path.sep
-        
+        if home_dir in file_path:
+            file_path = file_path.replace(home_dir, "${HOME}")
+
         # message = f"{tool} : unknown version!"
         if dist_is_editable(tool):
             repo_path = editable_dist_location(tool)
             repo = Repo(repo_path)
             try:
-                describe = repo.git.describe(tags=True, dirty=True)
+                # describe = repo.git.describe(tags=True, dirty=True)
+                describe = repo.head.object.hexsha[:6]
+                if repo.untracked_files or repo.is_dirty():
+                    describe = f"{describe} (uncommitted changes)"
             except GitCommandError:
                 describe = "Error"
                 
@@ -234,7 +242,7 @@ def get_esm_package_attributes(tool):
             'upgrade_required' : upgrade_required,
             'importable' : True
         }
-                
+
     # import failed for some reason
     else:
         attr_dict = {
@@ -307,9 +315,9 @@ def check(**kwargs):
     colorama.init(autoreset=True)
     
     # 2D list that contains the information table
-    headers = ['package_name', 'version', 'file', 'branch', 'tags']
+    headers = ['package_name', 'version', 'file', 'branch', 'commit ID']
     table = []   
-    
+
     esm_tools_modules = get_esm_packages()    
 
     # --package is passed on the command-line, we are dealing with a single package
@@ -320,7 +328,7 @@ def check(**kwargs):
             sys.exit(1)
         else:
             esm_tools_modules = [package]
-    
+
     attr_dict_all = {}  # attributes for all tools
     extra_messages = []
 
@@ -329,7 +337,7 @@ def check(**kwargs):
         msg = f"::: Obtaining information for the tool: {tool:<20} [{index}/{len(esm_tools_modules)}]"
         sys.stdout.write(msg)
         sys.stdout.flush()
-    
+
         # get the package attributes
         attr_dict = get_esm_package_attributes(tool)
         attr_dict_all[tool] = attr_dict
@@ -346,7 +354,7 @@ def check(**kwargs):
         latest_version = latest_version_print = attr_dict['latest_version']
         upgrade_required = upgrade_required_print = attr_dict['upgrade_required']
         importable       = importable_print   = attr_dict["importable"]
-        
+
         # color code:
         # - GREEN: the tools is up to date
         # - YELLOW: upgrade required
@@ -359,9 +367,9 @@ def check(**kwargs):
         if kwargs["no_color"]:
             upgrade_color = not_available_color = colorama.Style.RESET_ALL
 
-        # mark the tag if the repository has uncommited changes. Eg. it is 
+        # mark the tag if the repository has uncommitted changes. Eg. it is 
         # a dirty repo
-        if describe_print is not None and "dirty" in describe:
+        if describe_print is not None and "uncommitted" in describe:
             if not kwargs["no_color"]:
                 describe = f"{colorama.Back.RED}{colorama.Fore.WHITE}{describe}"
 
@@ -384,7 +392,7 @@ def check(**kwargs):
             extra_messages.append(
                 f"- upgrade required for {tool}. Use: "\
                 f"{upgrade_color}esm_versions upgrade {tool}{Style.RESET_ALL}")
-                
+
         # also set these for the all single package prints
         attr_dict_all[tool]['tool_print'] = tool_print
         attr_dict_all[tool]['version_print'] = version_print
@@ -395,11 +403,11 @@ def check(**kwargs):
         # construct the table for tabular output
         table.append([tool_print, version_print, file_path_print, 
             branch_print, describe_print])
-        
+
         # pause for a little to show the beautiful progress bar
         time.sleep(0.5)  
         clear_line(len(msg))
-        
+
     # ===
     # print the results
     # ===
@@ -423,11 +431,11 @@ def check(**kwargs):
     # print the full table 
     else: 
         print(tabulate(table, headers, tablefmt='psql')) 
-        
+
     # Print the extra messages such as upgrades 
     for line in extra_messages:
         print(line)
-        
+
 
 # PG: Blatant theft:
 # https://stackoverflow.com/questions/42582801/check-whether-a-python-package-has-been-installed-in-editable-egg-link-mode
@@ -667,7 +675,7 @@ def report_single_package(package, version, file_path, branch, describe):
     print(tee + hline + f" version: {version}")
     print(tee + hline + f" path: {file_path}")
     print(tee + hline + f" branch: {branch}")
-    print(elbow + hline + f" tags: {describe}")
+    print(elbow + hline + f" commit ID: {describe}")
 
 
 def clear_line(nchars):    
@@ -692,10 +700,10 @@ def get_latest_version(tool):
     except requests.exceptions.RequestException:
         print(f"Warning: unable to retrieve the latest version information for {tool}")
         sys.exit()
-        
+
         version = None
         return version
-        
+
     soup = BeautifulSoup(page.content, 'html.parser')
     
     # get the first h4
@@ -714,7 +722,7 @@ def get_latest_version(tool):
         version = version[1:]
 
     return version
-    
+
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
