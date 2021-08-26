@@ -314,7 +314,7 @@ def check(**kwargs):
     Results will be printed as a table or line-by-line if the terminal width is small 
     """
     colorama.init(autoreset=True)
-    
+
     # 2D list that contains the information table
     headers = ['package_name', 'version', 'file', 'branch', 'commit ID']
     table = []   
@@ -362,7 +362,7 @@ def check(**kwargs):
         # - RED: tool is not installed or not importable
         upgrade_color = Fore.YELLOW if upgrade_required else Fore.GREEN
         not_available_color = Fore.RED
-        
+
         # if --no-color is provided then cancel the color formatting. This can
         # be useful for the color blind people.
         if kwargs["no_color"]:
@@ -567,7 +567,7 @@ def pip_or_pull(tool, version=None):
 def check_importable_tools():
     global global_vars
     esm_tools_modules = get_esm_packages()
-    
+
     # check each tool and turn on the global setting if the module is installed
     for tool in esm_tools_modules:
         try:
@@ -596,7 +596,7 @@ def upgrade(tool_to_upgrade="all"):
 
     # check all modules and modify the global 'esm_tools_installed' flag
     check_importable_tools()
-    
+
     if tool_to_upgrade == "all":
         for tool in esm_tools_modules:
             if global_vars.esm_tools_installed[tool]:
@@ -641,12 +641,12 @@ def get(package, attribute="all", **kwargs):
         One of the following: version, file_path, branch, describe
     """
     esm_tools_modules = get_esm_packages()
-    
+
     # error checks
     if package not in esm_tools_modules:
         print(f"ERROR: {package} is not found in the installed packages")
         sys.exit(1)
-    
+
     attr_dict = get_esm_package_attributes(package)
     # error check
     if attribute != "all":
@@ -723,7 +723,7 @@ def get_latest_version(tool):
         version = version[1:]
 
     return version
- 
+
 
 @main.command()
 @click.argument("tool", default="all")
@@ -731,25 +731,34 @@ def get_latest_version(tool):
 def editable_install(tool, install_directory):
     """
     """
-    tool_dir = f"{install_directory}/{tool}"
-    if not os.path.isdir(tool_dir):
-        os.mkdir(tool_dir) 
+    colorama.init(autoreset=True)
+    if tool == "all":
+        tools = get_esm_packages()
+        tools.remove("esm_version_checker")
     else:
-        print(f"Directory {tool_dir} already exists. Exiting")
-        sys.exit(1)
+        tools = [tool]
 
-    os.chdir(tool_dir)
+    for tool in tools:
+        print(f"\n{colorama.Fore.GREEN}Working on the tool: {tool}")
+        tool_dir = f"{install_directory}/{tool}"
+        if not os.path.isdir(tool_dir):
+            os.makedirs(tool_dir) 
+        else:
+            print(f"Directory {tool_dir} already exists. Exiting")
+            sys.exit(1)
 
-    url = global_vars.esm_tools_github_url + tool
-    git.Repo.clone_from(url, tool_dir)
+        os.chdir(tool_dir)
 
-    print(os.getcwd())
-    command_list = [sys.executable, "-m", "pip", "install", "-e", "."]
-    try:
-        subprocess.check_call(command_list)
-    except:
-        print("Can't install the tool {tool}. Exiting")
-        sys.exit(1)
+        url = global_vars.esm_tools_github_url + tool
+        git.Repo.clone_from(url, tool_dir)
+
+        print(os.getcwd())
+        command_list = [sys.executable, "-m", "pip", "install", "--no-deps", "-e", "."]
+        try:
+            subprocess.check_call(command_list)
+        except:
+            print("Can't install the tool {tool}. Skipping")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
