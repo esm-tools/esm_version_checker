@@ -15,7 +15,7 @@ def read(filename):
 
 setup(
     name="esm_version_checker",
-    version="5.1.4",
+    version="5.1.5",
     url="https://github.com/esm-tools/esm_version_checker",
     license="MIT",
     author="Paul Gierz",
@@ -32,6 +32,7 @@ setup(
         "esm_rcfile @ git+https://github.com/esm-tools/esm_rcfile.git",
         "bs4",
         "colorama",
+        "typing_extensions>=3.10.0.0",
     ],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
