@@ -359,6 +359,12 @@ def check(**kwargs):
         if kwargs["no_color"]:
             upgrade_color = not_available_color = colorama.Style.RESET_ALL
 
+        # mark the tag if the repository has uncommited changes. Eg. it is 
+        # a dirty repo
+        if describe_print is not None and "dirty" in describe:
+            if not kwargs["no_color"]:
+                describe = f"{colorama.Back.RED}{colorama.Fore.WHITE}{describe}"
+
         tool_print      = f"{upgrade_color}{tool}{Style.RESET_ALL}"
         version_print   = f"{upgrade_color}{version}{Style.RESET_ALL}"
         if upgrade_required:
@@ -366,7 +372,7 @@ def check(**kwargs):
         file_path_print = f"{upgrade_color}{file_path}{Style.RESET_ALL}"
         branch_print    = f"{upgrade_color}{branch}{Style.RESET_ALL}"
         describe_print  = f"{upgrade_color}{describe}{Style.RESET_ALL}"
-            
+
         if not importable:
             tool_print      = f"{not_available_color}{tool}{Style.RESET_ALL}"
             version_print   = f"{not_available_color}{version}{Style.RESET_ALL}"
@@ -693,19 +699,20 @@ def get_latest_version(tool):
     soup = BeautifulSoup(page.content, 'html.parser')
     
     # get the first h4
-    repo_content = soup.find("div", id="repo-content-pjax-container")
+    # repo_content = soup.find("div", id="repo-content-pjax-container")
+    repo_content = soup.find("div", {"class": "commit js-details-container Details"})
     h4 = repo_content.find_all('h4')[0]
-
-    version_pattern = "[0-9]+\.[0-9]+\.[0-9]+"
-    match = re.search(version_pattern, h4.text)
-   
-    if match is None:
+    latest_tag_link = h4.find("a", href=re.compile(".*/releases/tag/.*"))
+    # check if the correct version can be found
+    if latest_tag_link is None:
         print(f"WARNING: esm_versions can't read the version from {url}")
-
         version = None
         return None
 
-    version = match.group()    # eg. 5.1.7
+    version = latest_tag_link.text.strip()
+    if version.startswith('v'):
+        version = version[1:]
+
     return version
     
 
