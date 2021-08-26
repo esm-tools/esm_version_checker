@@ -735,7 +735,7 @@ def editable_install(tool, install_directory):
     if not os.path.isdir(tool_dir):
         os.mkdir(tool_dir) 
     else:
-        print(f"Directory {tool_dir} already exists. Exiting"
+        print(f"Directory {tool_dir} already exists. Exiting")
         sys.exit(1)
 
     os.chdir(tool_dir)
