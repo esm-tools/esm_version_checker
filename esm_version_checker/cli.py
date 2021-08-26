@@ -13,6 +13,7 @@ import shutil
 import time
 from packaging.version import parse as version_parse
 
+import git
 from git import Repo
 from git.exc import GitCommandError
 from github import Github, GithubException
@@ -722,7 +723,35 @@ def get_latest_version(tool):
         version = version[1:]
 
     return version
+ 
+
+@main.command()
+@click.argument("tool", default="all")
+@click.argument("install_directory", default=os.path.expanduser("~"))
+def editable_install(tool, install_directory):
+    """
+    """
+    tool_dir = f"{install_directory}/{tool}"
+    if not os.path.isdir(tool_dir):
+        os.mkdir(tool_dir) 
+    else:
+        print(f"Directory {tool_dir} already exists. Exiting"
+        sys.exit(1)
+
+    os.chdir(tool_dir)
+
+    url = global_vars.esm_tools_github_url + tool
+    git.Repo.clone_from(url, tool_dir)
+
+    print(os.getcwd())
+    command_list = [sys.executable, "-m", "pip", "install", "-e", "."]
+    try:
+        subprocess.check_call(command_list)
+    except:
+        print("Can't install the tool {tool}. Exiting")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
+    
