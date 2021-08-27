@@ -742,7 +742,7 @@ def editable_install(tool, install_directory):
         print(f"\n{colorama.Fore.GREEN}Working on the tool: {tool}")
         tool_dir = f"{install_directory}/{tool}"
         if not os.path.isdir(tool_dir):
-            os.makedirs(tool_dir) 
+            os.makedirs(tool_dir)
         else:
             print(f"Directory {tool_dir} already exists. Exiting")
             sys.exit(1)
@@ -758,7 +758,7 @@ def editable_install(tool, install_directory):
             subprocess.check_call(command_list)
         except:
             print("Can't install the tool {tool}. Skipping")
-            sys.exit(1)
+            continue
 
 
 if __name__ == "__main__":
