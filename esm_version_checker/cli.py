@@ -21,6 +21,7 @@ import shutil
 import configparser
 from packaging.version import parse as version_parse
 
+from .monorepo import *
 
 class GlobalVars:
     """A struct-like class for holding the global variables. GlobalVars 
@@ -411,10 +412,21 @@ def pip_or_pull(tool, version=None):
             remote = esm_tools_repo.remote()
             remote.pull()
             print("Pulled new version of ", tool)
+
         except AssertionError:
             print("WARNING: Only allowed to pull on release or develop!")
             print("WARNING: You are on a branch: %s" % esm_tools_repo.active_branch.name)
             print("WARNING: Please pull or change branches by yourself!")
+
+        # Get the version of ``esm_tools``
+        distribution = pkg_resources.get_distribution(tool)
+        major_version = int(distribution.version.split(".")[0])
+        # If it is version 6 and ``esm_versions`` is still used, it means that
+        # the special installation of the monorepo is necessary, so here we go...
+        if major_version > 5 or version=="monorepo":
+            if not version:
+                version = major_version
+            install_monorepo(tool, version)
 
     else:
         pip_upgrade(tool, version)
