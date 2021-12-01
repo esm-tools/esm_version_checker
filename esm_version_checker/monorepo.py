@@ -35,6 +35,7 @@ def install_monorepo(esm_tools, version):
     ]
 
     tools_dir, bin_dir, lib_dirs = find_dir_to_remove(packages)
+    os.chdir(tools_dir)
 
     steps = {
         "uninstall": "Uninstall packages (``pip uninstall esm_<package>``)",
@@ -45,13 +46,6 @@ def install_monorepo(esm_tools, version):
         "rm_easy": ["Remove ESM lines in the ``easy-install.pth`` files:"] + lib_dirs,
         "install": "Install ``ESM-Tools`` again",
     }
-
-    # Dirty fix for installing the monorepo branch for testing previous version 6 is
-    # around. Not used when the monorepo is in release
-    os.chdir(tools_dir)
-    if version=="monorepo":
-         subprocess.check_call(["git", "checkout", "monorepo"])
-         subprocess.check_call(["git", "pull"])
 
     # Printing and questionary
     text = \
@@ -96,8 +90,21 @@ def install_monorepo(esm_tools, version):
             ])
         ).ask()  # returns value of selection
         if "[Quit]" in response:
+            v = "v5.1.24"
+            p = subprocess.check_call(
+                f"git checkout {v}",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                shell=True,
+            )
             sys.exit(1)
         user_confirmed = questionary.confirm("Are you sure?").ask()
+
+    # Dirty fix for installing the monorepo branch for testing previous version 6 is
+    # around. Not used when the monorepo is in release
+    if version=="monorepo":
+         subprocess.check_call(["git", "checkout", "monorepo"])
+         subprocess.check_call(["git", "pull"])
 
     cprint()
 
