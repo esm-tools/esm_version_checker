@@ -90,13 +90,23 @@ def install_monorepo(esm_tools, version):
             ])
         ).ask()  # returns value of selection
         if "[Quit]" in response:
+            # If the user refuses to install the monorepo bring back esm_tools to the
+            # last multirepo compatible version.
             v = "v5.1.24"
-            p = subprocess.check_call(
-                f"git checkout {v}",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                shell=True,
-            )
+            if version=="monorepo":
+                p = subprocess.check_call(
+                    f"git checkout release",
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    shell=True,
+                )
+            else:
+                p = subprocess.check_call(
+                    f"git reset {v}",
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    shell=True,
+                )
             sys.exit(1)
         user_confirmed = questionary.confirm("Are you sure?").ask()
 
