@@ -10,12 +10,13 @@ import sys
 
 import regex as re
 
+
 def install_monorepo(esm_tools, version):
     """
     Does all the magic for successfully installing the monorepo if the user has the
     multirepo already installed.
     """
-    _, columns = os.popen('stty size', 'r').read().split()
+    _, columns = os.popen("stty size", "r").read().split()
     columns = int(columns)
 
     # Packages from multirepo
@@ -48,18 +49,19 @@ def install_monorepo(esm_tools, version):
     }
 
     # Printing and questionary
-    text = \
-        "**Welcome to the monorepository version of ESM-Tools!**\n" \
-        "\n" \
-        f"You are trying to upgrade to the major version ``{version}`` which does " \
-        "not use multiple repositories for different ``esm_<packages>`` anymore, " \
-        "but instead all packages are contained in the ``esm_tools`` package (i.e. " \
-        "esm_runscripts, esm_parser, esm_master, etc). You can find these packages " \
-        "now in ``esm_tools/src/``.\n" \
-        "\n" \
-        "Also note that you won't be able to use ``esm_versions`` command from now " \
-        "on, as this tool is not needed anymore for the monorepository, and it has " \
+    text = (
+        "**Welcome to the monorepository version of ESM-Tools!**\n"
+        "\n"
+        f"You are trying to upgrade to the major version ``{version}`` which does "
+        "not use multiple repositories for different ``esm_<packages>`` anymore, "
+        "but instead all packages are contained in the ``esm_tools`` package (i.e. "
+        "esm_runscripts, esm_parser, esm_master, etc). You can find these packages "
+        "now in ``esm_tools/src/``.\n"
+        "\n"
+        "Also note that you won't be able to use ``esm_versions`` command from now "
+        "on, as this tool is not needed anymore for the monorepository, and it has "
         "been consequently removed."
+    )
 
     cprint()
     cprint("**" + columns * "=" + "**")
@@ -67,8 +69,9 @@ def install_monorepo(esm_tools, version):
     cprint("**" + columns * "=" + "**")
 
     cprint(
-        "The monorepository version needs a special installation. " \
-        "ESM-Tools will perform the next steps:")
+        "The monorepository version needs a special installation. "
+        "ESM-Tools will perform the next steps:"
+    )
 
     c = 1
     for key, value in steps.items():
@@ -83,24 +86,13 @@ def install_monorepo(esm_tools, version):
     user_confirmed = False
     while not user_confirmed:
         response = questionary.select(
-            "Would you like to continue?",
-            choices = ([
-                "Yes!",
-                "[Quit] No, thank you..."
-            ])
+            "Would you like to continue?", choices=(["Yes!", "[Quit] No, thank you..."])
         ).ask()  # returns value of selection
         if "[Quit]" in response:
             # If the user refuses to install the monorepo bring back esm_tools to the
             # last multirepo compatible version.
             v = "v5.1.24"
-            if version=="monorepo":
-                p = subprocess.check_call(
-                    f"git checkout release",
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    shell=True,
-                )
-            else:
+            if not version == "monorepo":
                 p = subprocess.check_call(
                     f"git reset {v}",
                     stdout=subprocess.PIPE,
@@ -112,9 +104,9 @@ def install_monorepo(esm_tools, version):
 
     # Dirty fix for installing the monorepo branch for testing previous version 6 is
     # around. Not used when the monorepo is in release
-    if version=="monorepo":
-         subprocess.check_call(["git", "checkout", "monorepo"])
-         subprocess.check_call(["git", "pull"])
+    if version == "monorepo":
+        subprocess.check_call(["git", "checkout", "monorepo"])
+        subprocess.check_call(["git", "pull"])
 
     cprint()
 
@@ -180,6 +172,7 @@ def install_monorepo(esm_tools, version):
         cprint("--Installation failed!--")
         sys.exit(0)
 
+
 def uninstall(package):
     """
     Taken from https://stackoverflow.com/questions/35080207/how-to-pass-the-same-answer-to-subprocess-popen-automatically
@@ -190,21 +183,21 @@ def uninstall(package):
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
     )
-    yes_proc = subprocess.Popen(['yes', 'y'], stdout=process.stdin)
+    yes_proc = subprocess.Popen(["yes", "y"], stdout=process.stdin)
     process_output = process.communicate()[0]
     yes_proc.wait()
 
+
 def find_dir_to_remove(packages):
     path_to_dists = "/".join(site.getusersitepackages().split("/")[:-2])
-    python_dist_libs = [
-        x for x in os.listdir(f"{path_to_dists}/") if "python" in x
-    ]
+    python_dist_libs = [x for x in os.listdir(f"{path_to_dists}/") if "python" in x]
 
     lib_dirs = [f"{path_to_dists}/{x}/site-packages" for x in python_dist_libs]
     bin_dir = "/".join(path_to_dists.split("/")[:-1] + ["bin"])
     tools_dir = pkg_resources.get_distribution("esm_tools").location
 
     return tools_dir, bin_dir, lib_dirs
+
 
 def clean_easy_install(lib_dirs, packages):
     for ld in lib_dirs:
@@ -224,6 +217,7 @@ def clean_easy_install(lib_dirs, packages):
                     else:
                         f.write(line)
                 f.truncate()
+
 
 def cprint(text=""):
     # Bold strings
