@@ -91,7 +91,7 @@ def install_monorepo(esm_tools, version):
         if "[Quit]" in response:
             # If the user refuses to install the monorepo bring back esm_tools to the
             # last multirepo compatible version.
-            v = "v5.1.24"
+            v = "v5.1.25"
             if not version == "monorepo":
                 p = subprocess.check_call(
                     f"git reset {v}",
