@@ -158,7 +158,7 @@ def install_monorepo(esm_tools, version):
     c += 1
     cprint(f"**{c}** - {steps['install']}")
     p = subprocess.Popen(
-        f"pip install --user -e {tools_dir}",
+        f"cd {tools_dir} && pip install --user -e .",
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         shell=True,
@@ -167,10 +167,10 @@ def install_monorepo(esm_tools, version):
 
     if "Successfully installed esm-tools" in out:
         cprint(f"**Version {version} installed sucessfully!**")
-        sys.exit(1)
+        sys.exit(0)
     else:
         cprint("--Installation failed!--")
-        sys.exit(0)
+        sys.exit(1)
 
 
 def uninstall(package):
