@@ -183,7 +183,7 @@ def install_monorepo(esm_tools, version):
     out = p.communicate()[0].decode("utf-8")
 
     if "Successfully installed esm-tools" in out:
-        cprint(f"**Version {version} installed sucessfully!**")
+        cprint(f"**Version 6 installed sucessfully!**")
         sys.exit(0)
     else:
         cprint("--Installation failed!--")
