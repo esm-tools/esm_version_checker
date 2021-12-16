@@ -52,7 +52,7 @@ def install_monorepo(esm_tools, version):
     text = (
         "**Welcome to the monorepository version of ESM-Tools!**\n"
         "\n"
-        f"You are trying to upgrade to the major version ``{version}`` which does "
+        f"You are trying to upgrade to the major version ``6`` which does "
         "not use multiple repositories for different ``esm_<packages>`` anymore, "
         "but instead all packages are contained in the ``esm_tools`` package (i.e. "
         "esm_runscripts, esm_parser, esm_master, etc). You can find these packages "
