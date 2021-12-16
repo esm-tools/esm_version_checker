@@ -134,6 +134,8 @@ def install_monorepo(esm_tools, version):
     # Cleanup esm_tools folder
     clean_folders = ["esm_tools", "esm_tools.egg-info"]
     for cf in clean_folders:
+        if cf=="esm_tools":
+            cf = "esm_tools/__init__.py"
         f = f"{tools_dir}/{cf}"
         if os.path.isdir(f):
             c += 1
