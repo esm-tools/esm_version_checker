@@ -403,7 +403,7 @@ def pip_or_pull(tool, version=None):
         try:
             assert not esm_tools_repo.is_dirty()
         except AssertionError:
-            print("WARNING: Your esm_tools directory" + esm_tools_dir + "is not clean and cannot be updated!")
+            print("WARNING: Your esm_tools directory" + esm_tools_dir + " is not clean and cannot be updated!")
             print(
                 "WARNING: Please make sure you check in and commit everything before proceeding!"
             )
@@ -423,7 +423,7 @@ def pip_or_pull(tool, version=None):
         major_version = int(distribution.version.split(".")[0])
         # If it is version 6 and ``esm_versions`` is still used, it means that
         # the special installation of the monorepo is necessary, so here we go...
-        if major_version > 5 or version=="monorepo":
+        if major_version < 6 or version=="monorepo":
             if not version:
                 version = major_version
             install_monorepo(tool, version)

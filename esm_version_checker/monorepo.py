@@ -86,9 +86,9 @@ def install_monorepo(esm_tools, version):
     user_confirmed = False
     while not user_confirmed:
         response = questionary.select(
-            "Would you like to continue?", choices=(["Yes!", "[Quit] No, thank you..."])
+            "Would you like to continue?", choices=(["[Quit] No, thank you...", "Yes!"])
         ).ask()  # returns value of selection
-        if "[Quit]" in response:
+        if "[Quit]" in response and (version=="release" or version=="develop"):
             # If the user refuses to install the monorepo bring back esm_tools to the
             # last multirepo compatible version.
             v = "v5.1.25"
@@ -100,7 +100,22 @@ def install_monorepo(esm_tools, version):
                     shell=True,
                 )
             sys.exit(1)
+        elif "[Quit]" in response:
+            sys.exit(1)
         user_confirmed = questionary.confirm("Are you sure?").ask()
+
+    p = subprocess.check_call(
+        f"git checkout release",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+    )
+    p = subprocess.check_call(
+        f"git pull",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+    )
 
     # Dirty fix for installing the monorepo branch for testing previous version 6 is
     # around. Not used when the monorepo is in release
