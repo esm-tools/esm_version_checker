@@ -402,11 +402,13 @@ def pip_or_pull(tool, version=None):
         esm_tools_repo = Repo(esm_tools_dir)
         try:
             assert not esm_tools_repo.is_dirty()
+            branch_clean = True
         except AssertionError:
             print("WARNING: Your esm_tools directory" + esm_tools_dir + " is not clean and cannot be updated!")
             print(
                 "WARNING: Please make sure you check in and commit everything before proceeding!"
             )
+            branch_clean = False
         try:
             assert esm_tools_repo.active_branch.name in ["release", "develop"]
             remote = esm_tools_repo.remote()
@@ -418,15 +420,16 @@ def pip_or_pull(tool, version=None):
             print("WARNING: You are on a branch: %s" % esm_tools_repo.active_branch.name)
             print("WARNING: Please pull or change branches by yourself!")
 
-        # Get the version of ``esm_tools``
-        distribution = pkg_resources.get_distribution(tool)
-        major_version = int(distribution.version.split(".")[0])
-        # If it is version 6 and ``esm_versions`` is still used, it means that
-        # the special installation of the monorepo is necessary, so here we go...
-        if major_version < 6 or version=="monorepo":
-            if not version:
-                version = major_version
-            install_monorepo(tool, version)
+        if branch_clean:
+            # Get the version of ``esm_tools``
+            distribution = pkg_resources.get_distribution(tool)
+            major_version = int(distribution.version.split(".")[0])
+            # If it is version 6 and ``esm_versions`` is still used, it means that
+            # the special installation of the monorepo is necessary, so here we go...
+            if major_version < 6 or version=="monorepo":
+                if not version:
+                    version = major_version
+                install_monorepo(tool, version)
 
     else:
         pip_upgrade(tool, version)
