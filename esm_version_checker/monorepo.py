@@ -177,15 +177,26 @@ def install_monorepo(esm_tools, version):
     p = subprocess.Popen(
         f"cd {tools_dir} && pip install --user -e .",
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE,
         shell=True,
     )
-    out = p.communicate()[0].decode("utf-8")
+    out, err = p.communicate()
 
-    if "Successfully installed esm-tools" in out:
+    if not err:
         cprint(f"**Version 6 installed sucessfully!**")
         sys.exit(0)
+    elif "ERROR" in err.decode("utf-8"):
+        print(out.decode("utf-8"))
+        print(err.decode("utf-8"))
+        cprint("--Installation failed!--")
+        sys.exit(1)
+    elif "WARNING" in err.decode("utf-8"):
+        print(err.decode("utf-8"))
+        cprint(f"**Version 6 installed sucessfully with warnings!**")
+        sys.exit(0)
     else:
+        print(out.decode("utf-8"))
+        print(err.decode("utf-8"))
         cprint("--Installation failed!--")
         sys.exit(1)
 
